@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESP</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    color: #99ddff;
+    font-size: 12px;
+    font-family: Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+}
+
+body {
+    background: transparent;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/*菜单*/
+*:not(input, checkbox, textarea) {
+    /*禁止文本选择*/
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+    /* Non-prefixed version, currently */
+}
+
+.popup_container {
+    position: absolute;
+    z-index: 1000;
+    left: 50%;
+    top: 0;
+}
+
+#H5AlertView {
+    width: 220px;
+    height: 300px;
+    position: absolute;
+    left: -110px;
+    top: 40px;
+    text-align: center;
+    zoom: 0.8;
+}
+
+
+#title-text {
+    padding-top: 1px;
+    font-size: 18px;
+    color: #00fff0;
+  background-color: rgba(0,466,514,0.4);
+    width: 60%;
+   border-left: 25%;
+   display: inline-block;
+    border-radius: 5px;
+  }
+
+#info-text {
+    padding: 0px;
+    color: #77ffff;
+  background-color: rgba(0,466,514,0.4);
+    width: 80%;
+   border-left: 30%;
+   display: inline-block;
+    border-radius: 2px;
+}
+#content-view {
+    z-index: 0;
+    background: #aa00aa;
+    position: relative;
+    top: 10px;
+    border: 1px solid #0000ff;
+    border-radius: 9px;
+    padding: 5px;
+  background-image: url("https://i.pinimg.com/originals/0a/d7/a6/0ad7a6ee48623ab596d23ffe26b58b54.gif") ;
+  background-size: 240px,50px;
+ background-position: right 40% bottom 70%;
+  background-repeat:no-repeat;
+}
+  
+  
+
+button{
+    width: 40%;
+    height: 40px;
+    color: #fff;
+    background-color: rgba(114,44,514,0.4);
+    display: inline;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    outline: none;
+    border: none;
+    border-radius:10px;
+    padding:  px;
+    margin: 5px 0;
+    font-size: 15px;
+    
+}
+
+button:active {
+    background-color: #007E40;
+    transform: translateY(2px);
+}
+</style>
+</head>
+
+<body>
+<!--悬浮菜单-->
+<div class="popup_container">
+<div id="H5AlertView">
+<script>
+function draw(fps) {
+    load();
+    window.draw_state = 1;
+    
+}
+
+function unDraw() {
+    clearCtx();
+    window.draw_state = 0;
+    setTimeout(function(){},100);
+}
+
+function hideMenu() {
+
+alert("ESPボタンを押しても反応しない時以外に押すと酷い目にあいます")
+
+h5gg.setValue(Level + 0x58,"0", 'F32');
+
+    var menu = document.querySelector("#H5AlertView");
+    menu.style.display = 'none';
+
+    //隐藏菜单之后, 设置触控穿透悬浮窗口
+    setWindowTouch(false);
+}
+  function offes() {
+    location.href = 'https://lil7se.github.io/espoff/';
+  }
+</script>
+<div id="content-view">
+<div id="title-text">かぁいいMod</div>
+<div id="info-text">Entity ESP</div>
+  <br>
+<span>狙い</span>
+<input type="range" id="slider1" min="-0.5" max="0.5" step="0.1" value="0.3"/>
+<span id="rangevalue1">0.3</span>
+<br>
+<span>加速</span>
+<input type="range" id="slider2" min="1" max="10" step="0.01" value="1"/>
+<span id="rangevalue2">1.00</span>
+<br>
+<span>範囲</span>
+<input type="range" id="slider3" min="1" max="500" step="1" value="50"/>
+<span id="rangevalue3">50</span>
+<div>
+    <button onclick="draw()">おん！</button>
+    <button onclick="unDraw()">おふ！</button>
+    <button onclick="bigchara()">からだ</button>
+  <button onclick="f810()">あたま</button>
+  <button onclick="jump()">無限jump</button>
+  <button onclick="high()">ハイジャン</button>
+    <button onclick="nolrecoil()">無反動</button>
+    <button onclick="offes()">Onlyesp</button>
+</div>
+</div>
+</div>
+</div>
+</body>
+<script>
+//脚本放在最后面, body加载完之后再执行
+
+//激活webkit的button:active
+document.body.addEventListener('touchstart', function () {});
+    
+//设置不可拖动
+setWindowDrag(0, 0, 0, 0);
+
+//设置按照屏幕像素尺寸绘图(高清模式)
+var iosScale = window.devicePixelRatio;
+var sWidth = 0; //屏幕宽
+var sHeight = 0; //屏幕高
+var slider1 = document.querySelector("#slider1");
+var slider2 = document.querySelector("#slider2");
+var slider3 = document.querySelector("#slider3");
+
+//创建画布
+var canvasDom = document.createElement("canvas");
+document.body.appendChild(canvasDom);
+canvasDom.style.height = "100%";
+canvasDom.style.width = "100%";
+
+var layout = function()
+{
+    //window.orientation是设备握持方向, 不是屏幕显示方向
+    if(window.lastorientation==window.orientation) return;
+    window.lastorientation=window.orientation;
+    
+    //window.screen中的宽高不会随着屏幕旋转更新(只会在初始化的时候固定)
+    if(Math.abs(window.orientation)==90) {
+        //横屏模式
+        setWindowRect(0,0,window.screen.height,window.screen.width);
+        canvasDom.width = window.screen.height * iosScale;
+        canvasDom.height = window.screen.width * iosScale;
+        sWidth = window.screen.height;
+        sHeight = window.screen.width;
+    } else {
+        //竖屏模式
+        setWindowRect(0,0,window.screen.width,window.screen.height);
+        canvasDom.height = window.screen.height * iosScale;
+        canvasDom.width = window.screen.width * iosScale;
+        sWidth = window.screen.width;
+        sHeight = window.screen.height;
+    }
+}
+
+layout(); //设置旋转屏幕时自动调整布局和画布
+window.addEventListener("orientationchange", layout, false);
+
+//*设置自定义的悬浮按钮图标点击动作
+setButtonAction(function(){
+        
+     var menu = document.querySelector("#H5AlertView");
+     if(menu.style.display=='none') {
+         menu.style.display='block';
+         //隐藏菜单之后, 设置触控穿透悬浮窗口
+         setWindowTouch(true);
+     } else {
+         menu.style.display='none';
+         //显示菜单之后, 设置触控不可穿透悬浮窗口
+         setWindowTouch(false);
+     }
+});//*/
+
+
+var ctx = canvasDom.getContext('2d');
+setLineWidth(iosScale);
+var fontFamily = " Arial";
+
+var cacheTimer = null; //数据缓存计时器，减少遍历次数，提高性能
+var drawTimer = null; //绘图计时器，控制帧率
+var actorCache = [];
+var baseAddr = Number(h5gg.getRangesList(0)[0].start);
+var GWorld = 0;
+var matrix = new Array(11).fill(0);
+
+function load(){
+
+h5gg.clearResults();
+h5gg.searchNumber(baseAddr + 0x429FAA0, 'I64', '0x0', '0x300000000');
+
+count1 = h5gg.getResultsCount();
+r1 = h5gg.getResults(count1);
+
+for (var i = 0; i < count1; i++) {
+
+if (readFloat(Number(r1[i].address) + 0x270) == 0.75){
+if (readInt(Number(r1[i].address) + 0x224) > 100){
+if (readInt(Number(r1[i].address) + 0x220) < readInt(Number(r1[i].address) + 0x224)){
+
+Level = Number(r1[i].address) + 0x218;
+ActorArray = readLong(Level)
+ActorCount = readInt(Level + 0x8);
+
+   }
+  }
+ }
+}
+
+//alert("0x"+Level.toString(16))
+
+}
+
+slider1.addEventListener('input',function () {
+rangevalue1.innerText = Number(slider1.value);
+});
+
+slider2.addEventListener('input',function () {
+rangevalue2.innerText = Number(slider2.value).toFixed(2);
+
+addr1 = readLong(baseAddr + 0x4B3CE60)
+addr1 = readLong(addr1 + 0xE0)
+addr1 = readLong(addr1 + 0x28)
+addr1 = (addr1 + 0x150)
+h5gg.setValue(addr1, Number(slider2.value), 'F32');
+});
+
+slider3.addEventListener('input',function () {
+rangevalue3.innerText = Number(slider3.value).toFixed(0);
+});
+
+function drawCache() {
+
+if (isNull(ActorArray)) return;
+
+var ActorCount = readInt(Level + 0x8);
+
+    var tempArr = [];
+    for (var i = 0; i < ActorCount; i++) {
+        var actor = readLong(ActorArray + i * 8);
+        if (isNull(actor)) continue;
+        var rootComponent = readLong(actor + 0x10);
+         if (0 == readFloat(rootComponent + 0x1E4)) continue;
+         //if (-9.8 != readFloat(rootComponent + 0x1CC)) continue;
+         tempArr.push(actor);
+    }
+    actorCache = tempArr;
+}
+    
+function shadowDraw() {
+
+aaa = []
+bbb = 999
+ccc = undefined
+aimbotrange = Number(slider3.value)
+
+Matrixaddr = (readLong(baseAddr + 0x4B3C500) + 0x490);
+
+CameraAddr = (readLong(readLong(baseAddr + 0x4B3CE60) + 0x130) + 0x7C)
+
+    clearCtx();
+
+    RotatorToMatrix();
+
+    var playerCout = 0;
+    for (var i = 0; i < actorCache.length; i++) {
+        var actor = actorCache[i];
+        if (isNull(actor)) continue;
+
+        var worldPos = {
+            X: readFloat(actor + 0xA0),
+            Y: readFloat(actor + 0xA0 + 4),
+            Z: readFloat(actor + 0xA0 + 8)
+        }
+
+        var DeltaX = (worldPos.X - readFloat(CameraAddr + 0));
+        var DeltaY = (worldPos.Y - readFloat(CameraAddr + 4));
+        var DeltaZ = (worldPos.Z - readFloat(CameraAddr + 8));
+        var Distance = Math.sqrt((DeltaX ** 2) + (DeltaY ** 2) + (DeltaZ ** 2));
+
+        if (Distance <= 4) continue;
+
+        var zb1 = {
+            X: worldPos.X,
+            Y: worldPos.Y + 0.5,
+            Z: worldPos.Z
+        }
+        var zb2 = {
+            X: worldPos.X,
+            Y: worldPos.Y - 0.5,
+            Z: worldPos.Z
+        }
+
+        var fkzb1 = world2Screen(zb1);
+        var fkzb2 = world2Screen(zb2);
+        var fkgao = fkzb2.Y - fkzb1.Y;
+        var fkkuan = fkgao / 2;
+        var Vector = Vector2D(sWidth / 2, sHeight / 2, fkzb1.X, fkzb1.Y)
+
+        var actorInfo = {
+            x: fkzb1.X,
+            y: fkzb1.Y,
+            w: fkkuan,
+            h: fkgao,
+            dis: Distance,
+            actor: actor,
+            Vector: Vector,
+            Pos: worldPos
+        };
+
+aaa.push(actorInfo)
+
+        shadowInfo(actorInfo);
+        if (readFloat(readLong(actor + 0x10) + 0x1E4) == 0.1) playerCout++;
+     }
+
+for (var i = 0; i < aaa.length; i++) {
+ if (aaa[i].Vector <= aimbotrange && aaa[i].Vector < bbb) {
+  bbb = aaa[i].Vector
+  ccc = aaa[i]
+ }
+}
+
+    if (typeof ccc !== 'undefined') Aimbot(ccc);
+    //计数
+    drawCircle(sWidth / 2, sHeight / 2, aimbotrange, "#F00", false);
+    drawText(playerCout, sWidth / 2, 5, 7, "#f00", true);
+
+}
+
+// drawLine(0, 0, 100, 100, "#f00");
+// drawCircle(250, 250, 50, "#f00", false);
+// drawRect(100, 100, 50, 50, "#f00", false);
+// drawRoundRect(300, 300, 50, 50, 10, "#f00", false);
+// drawText("Shadow-", 100, 400, 16, "#f00", false);
+
+//ESP描画最終処理
+function shadowInfo(objectInfo) {
+var color = "#11ff00";
+
+if (readFloat(readLong(objectInfo.actor + 0x10) + 0x1E4) == 0.1) drawLine(sWidth / 2, 30, objectInfo.x, objectInfo.y, color);
+
+if(objectInfo.x<0 || objectInfo.y<0 || objectInfo.x>sWidth || objectInfo.y>sHeight) return;
+
+if (readFloat(readLong(objectInfo.actor + 0x10) + 0x1E4) != 1) drawRect(objectInfo.x - objectInfo.w / 2, objectInfo.y, objectInfo.w, objectInfo.h, color, false);
+
+//drawText("0x"+objectInfo.actor.toString(16), objectInfo.x, objectInfo.y - 10, 11, "#fff", true);
+
+//drawText(readFloat(readLong(objectInfo.actor + 0x10) + 0x1F8), objectInfo.x, objectInfo.y - 10, 11, "#fff", true);
+
+if (readFloat(readLong(objectInfo.actor + 0x10) + 0x1E4) == 1){
+
+CarType = h5gg.getValue(readLong(objectInfo.actor + 0x10) + 0x1F8, "U32")
+
+switch(Number(CarType)) {
+  case 1170735104:
+    var CarText = "バス"
+    break;
+  case 1171963904:
+    var CarText = "セダン"
+    break;
+  case 1170530304:
+    var CarText = "ジープ"
+    break;
+  case 1170612224:
+    var CarText = "ピックアップ"
+    break;
+  case 1172640563:
+    var CarText = "バイク"
+    break;
+  case 1169852470:
+    var CarText = "カート"
+    break;
+  case 1169752064:
+    var CarText = "三輪バイク"
+    break;
+  case 1170223104:
+    var CarText = "モーターボート"
+    break;
+  case 1169915904:
+    var CarText = "ワゴン"
+    break;
+  case 1175437312:
+    var CarText = "ホバークラフト"
+    break;
+  case 1170495868:
+    var CarText = "スケートボード"
+    break;
+  case 1167867904:
+    var CarText = "自転車"
+    break;
+  case 1170427904:
+    var CarText = "クーペ"
+    break;
+  default:
+    var CarText = "車両"
+}
+
+color = "#0FF"
+if (readFloat(objectInfo.actor + 0x14C) + readFloat(objectInfo.actor + 0x150) + readFloat(objectInfo.actor + 0x154) != 0) color = "#F00"
+
+drawText(CarText+" ["+Math.ceil(objectInfo.dis)+"m]", objectInfo.x, objectInfo.y, 5, color, true);
+}
+else{
+drawText("["+Math.ceil(objectInfo.dis)+"m]", objectInfo.x, objectInfo.y, 5, color, true);
+}
+
+ 
+}
+
+function Aimbot(objectInfo) {
+
+//var TargetOffset = -(getRandomInt(6) / 10)
+var TargetOffset = - Number(slider1.value)
+
+        var AimDelta = {
+            X: (readFloat(CameraAddr + 0) - objectInfo.Pos.X),
+            Y: (readFloat(CameraAddr + 4) - (objectInfo.Pos.Y) + TargetOffset),
+            Z: (readFloat(CameraAddr + 8) - objectInfo.Pos.Z)
+        }
+
+var AimDistance = Math.sqrt((AimDelta.X ** 2) + (AimDelta.Y ** 2) + (AimDelta.Z ** 2));
+
+        var Velocity = {
+            X: readFloat(objectInfo.actor + 0x14C + 0),
+            Y: readFloat(objectInfo.actor + 0x14C + 4),
+            Z: readFloat(objectInfo.actor + 0x14C + 8)
+        }
+
+        var Target = {
+            X: (AimDelta.X - (Velocity.X / 800) * AimDistance) / AimDistance,
+            Y: (AimDelta.Y - (Velocity.Y / 800) * AimDistance) / AimDistance,
+            Z: (AimDelta.Z - (Velocity.Z / 800) * AimDistance) / AimDistance
+        }
+
+
+
+h5gg.setValue(CameraAddr - 12,Target.X, 'F32');
+h5gg.setValue(CameraAddr - 8,Target.Y, 'F32');
+h5gg.setValue(CameraAddr - 4,Target.Z, 'F32');
+
+}
+
+// ********************* ESP描画関連 *********************
+
+//ESP初期化
+function clearCtx() {
+    ctx.clearRect(0, 0, canvasDom.width, canvasDom.height);
+}
+
+//デバイスピクセル比率
+function setLineWidth(w) {
+    ctx.lineWidth = w;
+    ctx.lineWidth = 1;
+}
+
+//線のESP，開始位置xy，終了位置xy，色
+function drawLine(x1, y1, x2, y2, color) {
+    x1 *= iosScale;
+    y1 *= iosScale;
+    x2 *= iosScale;
+    y2 *= iosScale;
+
+    ctx.beginPath();
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+    ctx.closePath();
+}
+
+//円のESP 中心位置，半径，色，塗りつぶし
+function drawCircle(x, y, r, color, isFill = true) {
+    x *= iosScale;
+    y *= iosScale;
+    r *= iosScale;
+
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.arc(x, y, r, 0, 2 * Math.PI);
+    if (isFill) {
+        ctx.fill();
+    } else {
+        ctx.stroke();
+    }
+    ctx.closePath();
+}
+
+//四角形のESP 開始位置xy，大きさ，色，塗りつぶし
+function drawRect(x, y, w, h, color, isFill = true) {
+    x *= iosScale;
+    y *= iosScale;
+    w *= iosScale;
+    h *= iosScale;
+
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    if (isFill) {
+        ctx.fillRect(x, y, w, h);
+    } else {
+        ctx.strokeRect(x, y, w, h);
+    }
+    ctx.closePath();
+}
+
+//绘制圆角矩形，起点xy，矩形宽高，圆角半径，颜色，是否填充矩形
+function drawRoundRect(x, y, w, h, r, color, isFill = true) {
+    x *= iosScale;
+    y *= iosScale;
+    w *= iosScale;
+    h *= iosScale;
+    r *= iosScale;
+
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    if (w < 2 * r) r = w / 2;
+    if (h < 2 * r) r = h / 2;
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    if (isFill) {
+        ctx.fill();
+    } else {
+        ctx.stroke();
+    }
+    ctx.closePath();
+}
+
+//文字のESP，文字内容，開始位置xy，文字サイズ，色，太文字
+function drawText(text, x, y, size, color, isFill = true) {
+    x *= iosScale;
+    y *= iosScale;
+    size *= iosScale;
+
+    ctx.beginPath();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = color;
+    ctx.strokeStyle = color;
+    ctx.font = size + 'px' + fontFamily;
+    if (isFill) {
+        ctx.fillText(text, x, y);
+    } else {
+        ctx.strokeText(text, x, y);
+    }
+    ctx.closePath();
+};
+
+// ********************* メモリ関連 *********************
+function readInt(addr) {
+    return Number(h5gg.getValue(addr, "I32"));
+}
+
+function readLong(addr) {
+    return Number(h5gg.getValue(addr, "I64"));
+}
+
+function readFloat(addr) {
+    return Number(h5gg.getValue(addr, "F32"));
+}
+
+function isNull(addr) {
+    return (addr < baseAddr || addr > 0x300000000);
+}
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+// ********************* アンリアルエンジン4関連 *********************
+function RotatorToMatrix() {
+matrix[0] = Number(h5gg.getValue(Matrixaddr,'F32'));
+matrix[1] = Number(h5gg.getValue(Matrixaddr + 8,'F32'));
+matrix[2] = Number(h5gg.getValue(Matrixaddr + 12,'F32'));
+matrix[3] = Number(h5gg.getValue(Matrixaddr + 16,'F32'));
+matrix[4] = Number(h5gg.getValue(Matrixaddr + 20,'F32'));
+matrix[5] = Number(h5gg.getValue(Matrixaddr + 24,'F32'));
+matrix[6] = Number(h5gg.getValue(Matrixaddr + 28,'F32'));
+matrix[7] = Number(h5gg.getValue(Matrixaddr + 48,'F32'));
+matrix[8] = Number(h5gg.getValue(Matrixaddr + 52,'F32'));
+matrix[9] = Number(h5gg.getValue(Matrixaddr + 56,'F32'));
+matrix[10] = Number(h5gg.getValue(Matrixaddr + 60,'F32'));
+}
+
+function vectorDot(lhs, rhs) {
+    return (((lhs.X * rhs.X) + (lhs.Y * rhs.Y)) + (lhs.Z * rhs.Z));
+}
+
+function Vector2D(x1,y1,x2,y2){
+    return Math.sqrt((x2 - x1) ** 2 + (y1 - y2) ** 2);
+}
+
+function world2Screen(worldLocation) {
+
+view = matrix[7] * worldLocation.X + matrix[8] * worldLocation.Y + matrix[9] * worldLocation.Z + matrix[10];
+
+XXX = matrix[0] * worldLocation.X + matrix[1] * worldLocation.Z + matrix[2]
+YYY = matrix[3] * worldLocation.X + matrix[4] * worldLocation.Y + matrix[5] * worldLocation.Z + matrix[6]
+
+if(view >= 0.01) view = 1 / view;
+
+XXX = XXX * view;
+YYY = YYY * view;
+
+XXX = (sWidth / 2) + Number(XXX) * (sWidth / 2);
+YYY = (sHeight / 2) - Number(YYY) * (sHeight / 2);
+
+var re = {
+        X:XXX,
+        Y:YYY
+    };
+
+    return re;
+
+}
+
+cacheTimer = setInterval(function() {
+    if(window.draw_state) drawCache();
+}, 2000);//全オブジェクト読み込み
+drawTimer = setInterval(function() {
+    if(window.draw_state)
+    {
+        shadowDraw();
+        
+        if(!window.fpscount) window.fpscount=0;
+        if(!window.fpstime) window.fpstime=performance.now();
+        window.fpscount++;
+        if((performance.now()-window.fpstime)>1000)
+        {
+            window.fps = window.fpscount;
+            window.fpstime = performance.now();
+            window.fpscount = 0;
+        }
+        ctx.textBaseline="top";
+        ctx.textAlign="center";
+        ctx.font='60px "Arial, sans-serif"';
+        ctx.fillStyle="red";
+        if(window.fps) ctx.fillText(window.fps, 1, 1);
+    }
+}, 1000/60);
+
+function bigchara(){
+
+value = window.prompt("テスト");
+
+h5gg.clearResults();
+h5gg.searchNumber('0.22', 'F32', '0x280000000', '0x300000000');
+h5gg.searchNearby('1', 'F32', '0x10');
+h5gg.searchNearby('1', 'I32', '0x4');
+h5gg.searchNumber('1', 'F32', '0x280000000', '0x300000000');
+h5gg.searchNearby('0.22', 'F32', '0x10');
+h5gg.searchNumber('0.22', 'F32', '0x280000000', '0x300000000');
+
+alert(h5gg.getResultsCount());
+
+h5gg.editAll(Number(value), 'F32');
+
+
+
+}
+
+function nolrecoil(){
+h5gg.clearResults();
+h5gg.searchNumber('700', 'F64', '0x100000000', '0x200000000');
+h5gg.searchNearby('0.925', 'F64', '0x1000');
+h5gg.searchNumber('700', 'F64', '0x100000000', '0x200000000');
+h5gg.editAll('99999999', 'F64');
+alert("end");
+}
+  
+function f810(){
+
+value = window.prompt("テスト");
+
+
+h5gg.clearResults();
+h5gg.searchNumber('0.15','F32','0x280000000','0x300000000');
+h5gg.searchNearby('1','I16','0x10');
+h5gg.searchNumber('0.15','F32','0x280000000','0x300000000');
+h5gg.searchNearby('1','I64','0x10');
+h5gg.searchNumber('0.15','F32','0x280000000','0x300000000');
+  
+alert(h5gg.getResultsCount());
+
+h5gg.editAll(Number(value), 'F32');
+
+
+
+}
+function jump() {
+ //無 限ジャンプオン
+h5gg.searchNumber('-10','F32','0x130000000','0x160000000');
+h5gg.searchNearby('50','F32','0x40');
+h5gg.searchNumber('50','F32','0x130000000','0x160000000');
+h5gg.searchNearby('0.55','F32','0x40');
+h5gg.searchNumber('0.55','F32','0x130000000','0x160000000');
+h5gg.editAll('111','F32');
+h5gg.clearResults()
+alert("無限ジャンプをオンにしたよ✌️")
+  }
+function high() {
+  h5gg.clearResults();
+h5gg.searchNumber('-5','F32','0x280000000','0x300000000');
+h5gg.editAll('30.11','F32');
+h5gg.clearResults()
+alert("ハイジャンプをオンにしたよ✌️")
+
+}
+
+</script>
+</html>
